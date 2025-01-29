@@ -2,7 +2,8 @@
 
 # Main game class containing core functions
 class Game
-  attr_reader :all_feedback, :turn
+  attr_reader :all_feedback, :turn, :id
+  attr_accessor :colors, :code_breaker
 
   COLOR_LIST = %w[🔴 🔵 🟢 🟠 🟣 🟡].freeze
   # 0: red, 1: blue, 2: green, 3: orange, 4: purple, 6: yellow
