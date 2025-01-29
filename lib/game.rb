@@ -2,6 +2,8 @@
 
 # Main game class containing core functions
 class Game
+  attr_reader :all_feedback, :turn
+
   COLOR_LIST = %w[🔴 🔵 🟢 🟠 🟣 🟡].freeze
   # 0: red, 1: blue, 2: green, 3: orange, 4: purple, 6: yellow
 
@@ -12,14 +14,11 @@ class Game
     @code_breaker = code_breaker # boolean
     @code = code_breaker ? random_code : [] # correct code
     @current_guess = [] if code_breaker
+    @all_feedback = []
+    @turn = 0
     @id = rand(100..999)
 
     @@all_ids << @id
-  end
-
-  def create_code(code)
-    @code = code
-    to_colors(code)
   end
 
   def guess(guess) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
@@ -44,11 +43,17 @@ class Game
         feedback[:none] += 1
       end
     end
-
+    
+    @all_feedback << feedback
     feedback
   end
 
   # helper functions
+
+  def create_code(code)
+    @code = code
+    to_colors(code)
+  end
 
   def to_colors(code)
     code.map do |peg|
