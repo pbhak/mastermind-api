@@ -1,3 +1,6 @@
+# Bruno API test files
+bruno/
+
 *.gem
 *.rbc
 /.config

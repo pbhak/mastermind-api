@@ -10,20 +10,22 @@ class Game
 
   @@all_ids = [] # rubocop:disable Style/ClassVars
 
-  def initialize(code_breaker, colors: true)
+  def initialize(code_breaker, colors = true) # rubocop:disable Style/OptionalBooleanParameter
     @colors = colors
     @code_breaker = code_breaker # boolean
     @code = code_breaker ? random_code : [] # correct code
     @current_guess = [] if code_breaker
-    @all_feedback = []
+    @all_feedback = {}
     @turn = 0
     @id = rand(100..999)
+    @id = rand(100..999) while @@all_ids.include?(@id)
 
     @@all_ids << @id
   end
 
   def guess(guess) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
     @current_guess = guess
+    @turn += 1
     # feedback
     feedback = Hash.new(0)
     code_distribution = @code.each_with_object(Hash.new(0)) { |peg, distrib| distrib[peg] += 1 }
@@ -44,8 +46,8 @@ class Game
         feedback[:none] += 1
       end
     end
-    
-    @all_feedback << feedback
+
+    @all_feedback[@turn] = feedback
     feedback
   end
 
