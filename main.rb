@@ -3,8 +3,8 @@
 require 'sinatra'
 require_relative 'lib/game'
 
-set :port, 4567
-set :environment, 'development' # TODO: switch to production before deployment
+set :port, 45011
+set :environment, 'production' 
 
 ALLOWED_ROLES = %w[cm cb codemaker codebreaker code_maker code_breaker code-maker code-breaker].freeze
 ALLOWED_COLORS = [true, false, 'true', 'false', 'yes', 'no'].freeze
