@@ -184,8 +184,9 @@ get '/games' do
       colors: game.colors,
       role: game.code_breaker ? 'code_breaker' : 'code_maker',
       feedback: game.all_feedback,
-      turn: game.turn
-    }
+      turn: game.turn,
+      code: (game.code unless game.code_breaker)
+  }.compact
   end
 
   JSON.generate(all_games)
@@ -200,7 +201,8 @@ get '/games/:id' do |id|
           colors: game.colors,
           role: game.code_breaker ? 'code_breaker' : 'code_maker',
           feedback: game.all_feedback,
-          turn: game.turn
+          turn: game.turn,
+          code: (game.code unless game.code_breaker)
         }
       )
     end
@@ -210,7 +212,7 @@ get '/games/:id' do |id|
 end
 
 get '/games/:id/:attribute' do |id, attribute|
-  halt 400 unless %w[id colors role feedback turn].include?(attribute.downcase)
+  halt 400 unless %w[id colors role feedback turn code].include?(attribute.downcase)
 
   games.each do |game_id, game|
     next unless game_id == id.to_i
@@ -221,6 +223,7 @@ get '/games/:id/:attribute' do |id, attribute|
     when 'role' then return (game.code_breaker ? 'code_breaker' : 'code_maker').to_json
     when 'feedback' then return game.all_feedback.to_json
     when 'turn' then return game.turn.to_json
+    when 'code' then return # TODO fix this
     end
   end
 end
