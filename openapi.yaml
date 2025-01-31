@@ -1,0 +1,16 @@
+openapi: 3.0.3
+info:
+  title: Mastermind API
+  description: API to play a game of Mastermind against a computer
+  version: 1.0.1
+paths:
+  /new:
+    post:
+      description: Creates a new game.
+      responses:
+        201:
+          description: Creates game and returns the game data.
+          content:
+            application/json:
+              schema:
+              
