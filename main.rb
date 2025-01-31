@@ -140,8 +140,9 @@ post '/guess/:id/computer' do |id| # rubocop:disable Metrics/BlockLength
   halt 400 unless games.key?(id)
   halt 400 if games[id].code_breaker
 
-  turn = games[id].turn + 1
-  games[id].turn += 1
+  games[id].turn = 1 if games[id].turn.zero?
+  turn = games[id].turn
+  p games[id].turn
 
   if games[id].all_feedback.empty?
     guess = games[id].computer.place_guess(games[id].turn, {}, games[id].code)

@@ -15,8 +15,7 @@ class Game
   def initialize(code_breaker, colors = true) # rubocop:disable Style/OptionalBooleanParameter
     @colors = colors
     @code_breaker = code_breaker # boolean
-    @code = random_code # TODO: remove this one and instead implement custom codesetting
-    # @code = code_breaker ? random_code : [] # correct code
+    @code = random_code # leaving this here to make randomization default
     @computer = Computer.new
     @current_guess = [] if code_breaker
     @all_feedback = {}
