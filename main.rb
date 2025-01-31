@@ -7,7 +7,6 @@ set :port, 45011
 set :environment, 'production' 
 
 ALLOWED_ROLES = %w[cm cb codemaker codebreaker code_maker code_breaker code-maker code-breaker].freeze
-ALLOWED_COLORS = [true, false, 'true', 'false', 'yes', 'no'].freeze
 
 games = {}
 before do
@@ -46,14 +45,11 @@ error 500 do
 end
 
 post '/new' do
-  halt 400 unless @request_body.key?('role') && @request_body.key?('color')
+  halt 400 unless @request_body.key?('role')
   halt 400 unless ALLOWED_ROLES.include?(@request_body['role'].downcase)
 
-  @request_body['color'] = @request_body['color'].downcase if @request_body['color'].instance_of?(String)
-  halt 400 unless ALLOWED_COLORS.include?(@request_body['color'])
-
   code_breaker = ALLOWED_ROLES.index(@request_body['role'].downcase).odd?
-  game = Game.new(code_breaker, @request_body['color'])
+  game = Game.new(code_breaker)
   games[game.id] = game
 
   status 201
@@ -61,7 +57,6 @@ post '/new' do
     {
       data: {
         id: game.id,
-        colors: ALLOWED_COLORS.index(game.colors).even? ? true : false,
         role: ALLOWED_ROLES.index(@request_body['role']).even? ? 'code_maker' : 'code_breaker'
       }
     }
@@ -182,7 +177,6 @@ get '/games' do
   games.each do |id, game|
     all_games << {
       id: id,
-      colors: game.colors,
       role: game.code_breaker ? 'code_breaker' : 'code_maker',
       feedback: game.all_feedback,
       turn: game.turn,
@@ -199,7 +193,6 @@ get '/games/:id' do |id|
       return JSON.generate(
         {
           id: id,
-          colors: game.colors,
           role: game.code_breaker ? 'code_breaker' : 'code_maker',
           feedback: game.all_feedback,
           turn: game.turn,
@@ -213,7 +206,7 @@ get '/games/:id' do |id|
 end
 
 get '/games/:id/:attribute' do |id, attribute|
-  halt 400 unless %w[id colors role feedback turn code].include?(attribute.downcase)
+  halt 400 unless %w[id role feedback turn code].include?(attribute.downcase)
 
   games.each do |game_id, game|
     next unless game_id == id.to_i
@@ -222,7 +215,6 @@ get '/games/:id/:attribute' do |id, attribute|
 
     case attribute
     when 'id' then return game_id.to_json
-    when 'colors' then return game.colors.to_json
     when 'role' then return (game.code_breaker ? 'code_breaker' : 'code_maker').to_json
     when 'feedback' then return game.all_feedback.to_json
     when 'turn' then return game.turn.to_json
@@ -236,13 +228,6 @@ patch '/update/:id' do |id|
   halt 400 if @request_body.empty?
   halt 404, "ID #{id} Not Found" unless games.key?(id)
 
-  if @request_body.key?('color')
-    @request_body['color'] = @request_body['color'].downcase if @request_body['color'].instance_of?(String)
-    halt 400 unless ALLOWED_COLORS.include?(@request_body['color'])
-
-    games[id].colors = @request_body['color']
-  end
-
   if @request_body.key?('role')
     halt 400 unless ALLOWED_ROLES.include?(@request_body['role'].downcase)
     code_breaker = ALLOWED_ROLES.index(@request_body['role']).odd?
@@ -254,7 +239,6 @@ patch '/update/:id' do |id|
     {
       data: {
         id: id,
-        colors: ALLOWED_COLORS.index(games[id].colors).even? ? true : false,
         role: games[id].code_breaker ? 'code_breaker' : 'code_maker'
       }
     }

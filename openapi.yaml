@@ -3,6 +3,8 @@ info:
   title: Mastermind API
   description: API to play a game of Mastermind against a computer
   version: 1.0.1
+servers:
+  - url: https://mastermind.pbhak.hackclub.app
 paths:
   /new:
     post:
@@ -13,4 +15,26 @@ paths:
           content:
             application/json:
               schema:
-              
+                type: object
+                properties: 
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        format: int32
+                        minimum: 100
+                        maximum: 999
+                      colors:
+                        type: string
+                      role:
+                        type: string
+        400:
+          description: An error in the request. Can be caused by incorrect or invalid data in the request body.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string

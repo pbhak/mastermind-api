@@ -5,15 +5,11 @@ require_relative 'computer'
 # Main game class containing core functions
 class Game
   attr_reader :all_feedback, :id, :computer
-  attr_accessor :colors, :code_breaker, :turn, :code
-
-  COLOR_LIST = %w[🔴 🔵 🟢 🟠 🟣 🟡].freeze
-  # 0: red, 1: blue, 2: green, 3: orange, 4: purple, 6: yellow
+  attr_accessor :code_breaker, :turn, :code
 
   @@all_ids = [] # rubocop:disable Style/ClassVars
 
-  def initialize(code_breaker, colors = true) # rubocop:disable Style/OptionalBooleanParameter
-    @colors = colors
+  def initialize(code_breaker) # rubocop:disable Style/OptionalBooleanParameter
     @code_breaker = code_breaker # boolean
     @code = random_code # leaving this here to make randomization default
     @computer = Computer.new
@@ -53,17 +49,6 @@ class Game
   end
 
   # helper functions
-
-  def create_code(code)
-    @code = code
-    to_colors(code)
-  end
-
-  def to_colors(code)
-    code.map do |peg|
-      COLOR_LIST[peg - 1]
-    end
-  end
 
   def random_code
     [rand(1..6), rand(1..6), rand(1..6), rand(1..6)]
