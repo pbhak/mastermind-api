@@ -45,15 +45,6 @@ error 500 do
   )
 end
 
-error 410 do
-  JSON.generate(
-    {
-      error: '410 Gone',
-      message: 'Turns exceeded'
-    }
-  )
-end
-
 post '/new' do
   halt 400 unless @request_body.key?('role') && @request_body.key?('color')
   halt 400 unless ALLOWED_ROLES.include?(@request_body['role'].downcase)
@@ -77,7 +68,27 @@ post '/new' do
   )
 end
 
-post '/guess/:id' do |id|
+post '/set-code/:id' do |id|
+  id = id.to_i
+
+  halt 400 unless games.key?(id)
+  halt 400 if games[id].code_breaker
+  halt 400 unless @request_body.key?('code')
+  halt 400 unless @request_body['code'].is_a?(Array)
+  halt 400 unless @request_body['code'].length == 4
+  halt 400 unless @request_body['code'].all? { |peg| peg.between?(1, 6) }
+
+  games[id].code = @request_body['code']
+
+  JSON.generate(
+    {
+      code: @request_body['code'],
+      message: 'Code set'
+    }
+  )
+end
+
+post '/guess/:id' do |id| # rubocop:disable Metrics/BlockLength
   id = id.to_i
 
   halt 400 unless games.key?(id)
@@ -85,20 +96,82 @@ post '/guess/:id' do |id|
   halt 400 unless @request_body.key?('code')
   halt 400 unless @request_body['code'].is_a?(Array)
   halt 400 unless @request_body['code'].length == 4
-
-  if games[id].turn == 12
-    # game lost - remove game and raise HTTP 410 Gone
-    games.delete(id)
-    halt 410
-  end
+  halt 400 unless @request_body['code'].all? { |peg| peg.between?(1, 6) }
 
   feedback = games[id].guess(@request_body['code'])
+  if feedback[:exact] == 4
+    code = games[id].code
+    games.delete(id)
+    status 410
+    return JSON.generate(
+      {
+        error: '410 Gone',
+        message: 'Game won',
+        correct_code: code
+      }
+    )
+  end
+
+  if games[id].turn == 13
+    # game lost - remove game and raise HTTP 410 Gone
+    code = games[id].code
+    games.delete(id)
+    status 410
+    return JSON.generate(
+      {
+        error: '410 Gone',
+        message: 'Turns exceeded',
+        correct_code: code
+      }
+    )
+  end
 
   JSON.generate(
     {
-      turn: games[id].turn - 1, # TODO: make sure it exits after 12 turns and not 13
-      feedback: feedback,
-      won: feedback[:exact] == 4
+      turn: games[id].turn,
+      feedback: feedback
+    }
+  )
+end
+
+post '/guess/:id/computer' do |id| # rubocop:disable Metrics/BlockLength
+  id = id.to_i
+
+  halt 400 unless games.key?(id)
+  halt 400 if games[id].code_breaker
+
+  turn = games[id].turn + 1
+  games[id].turn += 1
+
+  if games[id].all_feedback.empty?
+    guess = games[id].computer.place_guess(games[id].turn, {}, games[id].code)
+  else
+    p [games[id].turn, games[id].all_feedback.values[-1], games[id].code]
+    guess = games[id].computer.place_guess(games[id].turn, games[id].all_feedback.values[-1], games[id].code)
+  end
+
+  feedback = games[id].guess(guess)
+
+  if feedback[:exact] == 4
+    # game won
+    code = games[id].code
+    games.delete(id)
+    status 410
+    return JSON.generate(
+      {
+        error: '410 Gone',
+        message: 'Game won',
+        correct_code: code
+      }
+    )
+  end
+
+  JSON.generate(
+    {
+      turn: turn,
+      guessed_code: guess,
+      actual_code: games[id].code,
+      feedback: feedback
     }
   )
 end
@@ -152,9 +225,8 @@ get '/games/:id/:attribute' do |id, attribute|
   end
 end
 
-patch '/games/:id' do |id|
+patch '/update/:id' do |id|
   id = id.to_i
-  halt 400 unless id.is_a?(Integer) && id.digits.length == 3
   halt 400 if @request_body.empty?
   halt 404, "ID #{id} Not Found" unless games.key?(id)
 
@@ -179,6 +251,27 @@ patch '/games/:id' do |id|
         colors: ALLOWED_COLORS.index(games[id].colors).even? ? true : false,
         role: games[id].code_breaker ? 'code_breaker' : 'code_maker'
       }
+    }
+  )
+end
+
+delete '/games/:id' do |id|
+  # Deletes a game from the server
+  halt 404, "ID #{id} Not Found" unless games.key?(id)
+
+  games.delete(id)
+  unless games[id].code_breaker == true
+    return JSON.generate(
+      {
+        deleted: true
+      }
+    )
+  end
+
+  JSON.generate(
+    {
+      deleted: true,
+      correct_code: games[id].code
     }
   )
 end
