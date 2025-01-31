@@ -186,7 +186,7 @@ get '/games' do
       feedback: game.all_feedback,
       turn: game.turn,
       code: (game.code unless game.code_breaker)
-  }.compact
+    }.compact
   end
 
   JSON.generate(all_games)
@@ -217,13 +217,15 @@ get '/games/:id/:attribute' do |id, attribute|
   games.each do |game_id, game|
     next unless game_id == id.to_i
 
+    break if attribute.downcase == 'code' && game.code_breaker
+
     case attribute
     when 'id' then return game_id.to_json
     when 'colors' then return game.colors.to_json
     when 'role' then return (game.code_breaker ? 'code_breaker' : 'code_maker').to_json
     when 'feedback' then return game.all_feedback.to_json
     when 'turn' then return game.turn.to_json
-    when 'code' then return # TODO fix this
+    when 'code' then return game.code
     end
   end
 end
