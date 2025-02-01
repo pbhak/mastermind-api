@@ -1,4 +1,5 @@
 openapi: 3.0.3
+# TODO implement tags for better readability
 info:
   title: Mastermind API
   description: API to play a game of Mastermind against a computer
@@ -9,6 +10,17 @@ paths:
   /new:
     post:
       description: Creates a new game.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role:
+                  type: string
+                  enum: [cm, cb, codemaker, codebreaker, code_maker, code_breaker, code-maker, code-breaker]
+                  example: code-maker
+                  description: The role of the player.
       responses:
         201:
           description: Creates game and returns the game data.
@@ -16,19 +28,22 @@ paths:
             application/json:
               schema:
                 type: object
-                properties: 
-                  data:
-                    type: object
-                    properties:
-                      id:
-                        type: integer
-                        format: int32
-                        minimum: 100
-                        maximum: 999
-                      colors:
-                        type: string
-                      role:
-                        type: string
+                properties:
+                  id:
+                    type: integer
+                    format: int32
+                    minimum: 100
+                    maximum: 999
+                    example: 500,
+                    description: Generated game ID
+                  code:
+                    type: array
+                    example: [1, 2, 3, 4]
+                    description: Game code (will only be shown if the human player is playing as a code maker). Can be changed via /set-code.
+                  role:
+                    type: string
+                    example: code_maker
+                    description: The player's role. Cannot be changed later. Can be code maker or code breaker.
         400:
           description: An error in the request. Can be caused by incorrect or invalid data in the request body.
           content:
@@ -38,3 +53,200 @@ paths:
                 properties:
                   error:
                     type: string
+                    example: 400 Bad Request
+                    description: The error code.
+  /set-code/{id}:
+    post:
+      description: Sets the game code. Will only succeed if the player is a code maker.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code:
+                  type: array
+                  example: [1, 2, 3, 4]
+                  description: Game code to set.
+
+      responses:
+        200:
+          description: Game code set succesfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: array
+                    example: [1, 2, 3, 4]
+                    description: The newly set game code.
+                  message:
+                    type: string
+                    example: Code set
+        400:
+          description: An error in the request. Can be caused by incorrect or invalid data in the request body.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 400 Bad Request
+                    description: The error code.
+  /guess/{id}:
+    post:
+      description: Places a guess. Will only succeed if the player is a code breaker.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code:
+                  type: array
+                  example: [1, 2, 3, 4]
+                  description: Code to guess.
+
+      responses:
+        200:
+          description: A guess has been placed succesfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  turn:
+                    type: integer
+                    format: int32
+                    minimum: 1
+                    maximum: 12
+                    example: 5
+                    description: The turn number. Can be between 1 and 12.
+                  feedback:
+                    $ref: "#/components/schemas/Feedback"
+
+        400:
+          description: An error in the request. Can be caused by incorrect or invalid data in the request body.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 400 Bad Request
+                    description: The error code.
+        
+        410:
+          description: The game no longer exists. Either the amount of maximum turns has been reached (12) and the player has lost or the player has succesfully guessed the code.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 410 Gone
+                    description: The error code.
+                  message:
+                    type: string
+                    example: Game won
+                    description: Game status. Can be either "Game won" or "Turns exceeded"
+                  correct_code:
+                    type: array
+                    example: [1, 2, 3, 4]
+                    description: The correct code.            
+  /guess/{id}/computer:
+    post:
+      description: Tells the game computer to make a guess. Will only go through if the player is a code maker.
+      responses:
+        200:
+          description: A guess has been placed succesfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  turn:
+                    type: integer
+                    format: int32
+                    minimum: 1
+                    maximum: 12
+                    example: 5
+                    description: The turn number. Can be between 1 and 12.
+                  guessed_code:
+                    type: array
+                    example: [1, 2, 3, 4]
+                    description: Code guessed by computer.
+                  actual_code:
+                    type: array
+                    example: [1, 2, 3, 4]
+                    description: The actual code (computer can not see this).
+                  feedback:
+                    $ref: "#/components/schemas/Feedback"
+                    
+
+        400:
+          description: An error in the request. Can be caused by incorrect or invalid data in the request body.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 400 Bad Request
+                    description: The error code.
+        
+        410:
+          description: The game no longer exists. Either the amount of maximum turns has been reached (12) and the computer has lost or the computer has succesfully guessed the code.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 410 Gone
+                    description: The error code.
+                  message:
+                    type: string
+                    example: Game won
+                    description: Game status. Can be either "Game won" or "Turns exceeded"
+                  correct_code:
+                    type: array
+                    example: [1, 2, 3, 4]
+                    description: The correct code.
+  
+components:
+  schemas:
+    Feedback:
+      type: object
+      description: The feedback object. Contains feedback on the computer's guess.
+      properties:
+        exact:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 4
+          example: 1
+          description: Amount of numbers in the correct position.
+        near:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 4
+          example: 2
+          description: Amount of numbers that are in the code, but in the incorrect position.
+        none:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 4
+          example: 1
+          description: Amount of numbers not in the code.
+
+
+

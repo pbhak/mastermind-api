@@ -3,8 +3,8 @@
 require 'sinatra'
 require_relative 'lib/game'
 
-set :port, 45011
-set :environment, 'production' 
+set :port, 45011 # rubocop:disable Style/NumericLiterals
+set :environment, 'production'
 
 ALLOWED_ROLES = %w[cm cb codemaker codebreaker code_maker code_breaker code-maker code-breaker].freeze
 
@@ -55,11 +55,10 @@ post '/new' do
   status 201
   JSON.generate(
     {
-      data: {
-        id: game.id,
-        role: ALLOWED_ROLES.index(@request_body['role']).even? ? 'code_maker' : 'code_breaker'
-      }
-    }
+      id: game.id,
+      role: ALLOWED_ROLES.index(@request_body['role']).even? ? 'code_maker' : 'code_breaker',
+      code: (game.code unless code_breaker)
+    }.compact
   )
 end
 
@@ -221,28 +220,6 @@ get '/games/:id/:attribute' do |id, attribute|
     when 'code' then return game.code
     end
   end
-end
-
-patch '/update/:id' do |id|
-  id = id.to_i
-  halt 400 if @request_body.empty?
-  halt 404, "ID #{id} Not Found" unless games.key?(id)
-
-  if @request_body.key?('role')
-    halt 400 unless ALLOWED_ROLES.include?(@request_body['role'].downcase)
-    code_breaker = ALLOWED_ROLES.index(@request_body['role']).odd?
-
-    games[id].code_breaker = code_breaker
-  end
-
-  JSON.generate(
-    {
-      data: {
-        id: id,
-        role: games[id].code_breaker ? 'code_breaker' : 'code_maker'
-      }
-    }
-  )
 end
 
 delete '/games/:id' do |id|
