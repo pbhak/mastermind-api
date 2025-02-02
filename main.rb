@@ -5,6 +5,7 @@ require_relative 'lib/game'
 
 set :port, 45011 # rubocop:disable Style/NumericLiterals
 set :environment, 'production'
+set :protection, :except => [:json_csrf]
 
 ALLOWED_ROLES = %w[cm cb codemaker codebreaker code_maker code_breaker code-maker code-breaker].freeze
 

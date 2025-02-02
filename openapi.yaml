@@ -35,7 +35,7 @@ paths:
                     format: int32
                     minimum: 100
                     maximum: 999
-                    example: 500,
+                    example: 500
                     description: Generated game ID
                   code:
                     type: array
@@ -71,7 +71,7 @@ paths:
             format: int32
             minimum: 100
             maximum: 999
-            example: 500,
+            example: 500
             description: A game ID.
       requestBody:
         content:
@@ -127,7 +127,7 @@ paths:
             format: int32
             minimum: 100
             maximum: 999
-            example: 500,
+            example: 500
             description: A game ID.
       requestBody:
         content:
@@ -206,7 +206,7 @@ paths:
             format: int32
             minimum: 100
             maximum: 999
-            example: 500,
+            example: 500
             description: A game ID.
       responses:
         200:
@@ -308,7 +308,7 @@ paths:
             format: int32
             minimum: 100
             maximum: 999
-            example: 500,
+            example: 500
             description: A game ID.
       responses:
         200:
@@ -350,7 +350,7 @@ paths:
             format: int32
             minimum: 100
             maximum: 999
-            example: 500,
+            example: 500
             description: A game ID.
       responses:
         200:
@@ -411,7 +411,7 @@ paths:
                   [attr]:
                     oneOf:
                       - type: integer
-                        example: 500,
+                        example: 500
                         description: Game ID or turn number, depending on supplied attribute
                       - type: string
                         example: code_breaker
@@ -476,7 +476,7 @@ components:
           format: int32
           minimum: 100
           maximum: 999
-          example: 500,
+          example: 500
           description: A game ID.
         role:
           type: string
