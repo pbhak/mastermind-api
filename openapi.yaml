@@ -1,15 +1,20 @@
 openapi: 3.0.3
-# TODO implement tags for better readability
-# TODO implement parameters for all requests that need any type of params
 info:
   title: Mastermind API
   description: API to play a game of Mastermind against a computer
   version: 1.0.1
+tags:
+  - name: games
+    description: Requests involving game objects
+  - name: codes
+    description: Requests guesses and codes
 servers:
   - url: https://mastermind.pbhak.hackclub.app
 paths:
   /new:
     post:
+      tags: 
+        - games
       description: Creates a new game.
       requestBody:
         content:
@@ -60,6 +65,8 @@ paths:
                     description: The error code.
   /set-code/{id}:
     post:
+      tags: 
+        - codes
       description: Sets the game code. Will only succeed if the player is a code maker.
       parameters:
         - name: id
@@ -116,6 +123,8 @@ paths:
                     description: The error code.
   /guess/{id}:
     post:
+      tags: 
+        - codes
       description: Places a guess. Will only succeed if the player is a code breaker.
       parameters:
         - name: id
@@ -195,6 +204,8 @@ paths:
                     description: The correct code.            
   /guess/{id}/computer:
     post:
+      tags: 
+        - codes
       description: Tells the game computer to make a guess. Will only go through if the player is a code maker.
       parameters:
         - name: id
@@ -274,6 +285,8 @@ paths:
                     description: The correct code.
   /games:
     get:
+      tags: 
+        - games
       description: Gets a list of all currently active games.
       responses:
         200:
@@ -297,6 +310,8 @@ paths:
                         description: All recorded feedback from the game, stored as a hash. Keys are turn numbers, while values are feedback objects.
   /games/{id}:
     get:
+      tags: 
+        - games
       description: Gets properties about an active game if it matches the given ID.
       parameters:
         - name: id
@@ -340,6 +355,8 @@ paths:
                     example: 404 Not Found
                     description: The error code.
     delete:
+      tags: 
+        - games
       parameters:
         - name: id
           in: path
@@ -380,9 +397,10 @@ paths:
                     type: string
                     example: 404 Not Found
                     description: The error code.
-
   /games/{id}/{attribute}:
     get:
+      tags: 
+        - games
       parameters:
         - name: id
           in: path
