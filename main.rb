@@ -227,9 +227,10 @@ delete '/games/:id' do |id|
   id = id.to_i
   # Deletes a game from the server
   halt 404, "ID #{id} Not Found" unless games.key?(id)
-
+  
+  code_breaker = games[id].code_breaker
   games.delete(id)
-  unless games[id].code_breaker == true
+  unless code_breaker
     return JSON.generate(
       {
         deleted: true
