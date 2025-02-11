@@ -246,6 +246,7 @@ patch '/update/:id' do |id|
 end
 
 delete '/games/:id' do |id|
+  id = id.to_i
   # Deletes a game from the server
   halt 404, "ID #{id} Not Found" unless games.key?(id)
 
