@@ -229,6 +229,7 @@ delete '/games/:id' do |id|
   halt 404, "ID #{id} Not Found" unless games.key?(id)
   
   code_breaker = games[id].code_breaker
+  code = games[id].code
   games.delete(id)
   unless code_breaker
     return JSON.generate(
@@ -241,7 +242,7 @@ delete '/games/:id' do |id|
   JSON.generate(
     {
       deleted: true,
-      correct_code: games[id].code
+      correct_code: code
     }
   )
 end
