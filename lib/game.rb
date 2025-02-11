@@ -9,7 +9,7 @@ class Game
 
   @@all_ids = [] # rubocop:disable Style/ClassVars
 
-  def initialize(code_breaker) # rubocop:disable Style/OptionalBooleanParameter
+  def initialize(code_breaker)
     @code_breaker = code_breaker # boolean
     @code = random_code # leaving this here to make randomization default
     @computer = Computer.new

@@ -3,12 +3,30 @@ info:
   title: Mastermind API
   description: API to play a game of Mastermind against a computer
   version: 1.0.1
+tags:
+  - name: games
+    description: Requests involving game objects
+  - name: codes
+    description: Requests guesses and codes
 servers:
   - url: https://mastermind.pbhak.hackclub.app
 paths:
   /new:
     post:
+      tags: 
+        - games
       description: Creates a new game.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role:
+                  type: string
+                  enum: [cm, cb, codemaker, codebreaker, code_maker, code_breaker, code-maker, code-breaker]
+                  example: code-maker
+                  description: The role of the player.
       responses:
         201:
           description: Creates game and returns the game data.
@@ -16,19 +34,24 @@ paths:
             application/json:
               schema:
                 type: object
-                properties: 
-                  data:
-                    type: object
-                    properties:
-                      id:
-                        type: integer
-                        format: int32
-                        minimum: 100
-                        maximum: 999
-                      colors:
-                        type: string
-                      role:
-                        type: string
+                properties:
+                  id:
+                    type: integer
+                    format: int32
+                    minimum: 100
+                    maximum: 999
+                    example: 500
+                    description: Generated game ID
+                  code:
+                    type: array
+                    example: [1, 2, 3, 4]
+                    items:
+                      type: integer
+                    description: Game code (will only be shown if the human player is playing as a code maker). Can be changed via /set-code.
+                  role:
+                    type: string
+                    example: code_maker
+                    description: The player's role. Cannot be changed later. Can be code maker or code breaker.
         400:
           description: An error in the request. Can be caused by incorrect or invalid data in the request body.
           content:
@@ -38,3 +61,442 @@ paths:
                 properties:
                   error:
                     type: string
+                    example: 400 Bad Request
+                    description: The error code.
+  /set-code/{id}:
+    post:
+      tags: 
+        - codes
+      description: Sets the game code. Will only succeed if the player is a code maker.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: A game ID.
+          schema:
+            type: integer
+            format: int32
+            minimum: 100
+            maximum: 999
+            example: 500
+            description: A game ID.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code:
+                  type: array
+                  items:
+                    type: integer
+                  example: [1, 2, 3, 4]
+                  description: Game code to set.
+
+      responses:
+        200:
+          description: Game code set succesfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: array
+                    items:
+                      type: integer
+                    example: [1, 2, 3, 4]
+                    description: The newly set game code.
+                  message:
+                    type: string
+                    example: Code set
+        400:
+          description: An error in the request. Can be caused by incorrect or invalid data in the request body.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 400 Bad Request
+                    description: The error code.
+  /guess/{id}:
+    post:
+      tags: 
+        - codes
+      description: Places a guess. Will only succeed if the player is a code breaker.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: A game ID.
+          schema:
+            type: integer
+            format: int32
+            minimum: 100
+            maximum: 999
+            example: 500
+            description: A game ID.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code:
+                  type: array
+                  items:
+                    type: integer
+                  example: [1, 2, 3, 4]
+                  description: Code to guess.
+
+      responses:
+        200:
+          description: A guess has been placed succesfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  turn:
+                    type: integer
+                    format: int32
+                    minimum: 1
+                    maximum: 12
+                    example: 5
+                    description: The turn number. Can be between 1 and 12.
+                  feedback:
+                    $ref: "#/components/schemas/Feedback"
+
+        400:
+          description: An error in the request. Can be caused by incorrect or invalid data in the request body.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 400 Bad Request
+                    description: The error code.
+        
+        410:
+          description: The game no longer exists. Either the amount of maximum turns has been reached (12) and the player has lost or the player has succesfully guessed the code.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 410 Gone
+                    description: The error code.
+                  message:
+                    type: string
+                    example: Game won
+                    description: Game status. Can be either "Game won" or "Turns exceeded"
+                  correct_code:
+                    type: array
+                    items:
+                      type: integer
+                    example: [1, 2, 3, 4]
+                    description: The correct code.            
+  /guess/{id}/computer:
+    post:
+      tags: 
+        - codes
+      description: Tells the game computer to make a guess. Will only go through if the player is a code maker.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: A game ID.
+          schema:
+            type: integer
+            format: int32
+            minimum: 100
+            maximum: 999
+            example: 500
+            description: A game ID.
+      responses:
+        200:
+          description: A guess has been placed succesfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  turn:
+                    type: integer
+                    format: int32
+                    minimum: 1
+                    maximum: 12
+                    example: 5
+                    description: The turn number. Can be between 1 and 12.
+                  guessed_code:
+                    type: array
+                    items:
+                      type: integer
+                    example: [1, 2, 3, 4]
+                    description: Code guessed by computer.
+                  actual_code:
+                    type: array
+                    items:
+                      type: integer
+                    example: [1, 2, 3, 4]
+                    description: The actual code (computer can not see this).
+                  feedback:
+                    $ref: "#/components/schemas/Feedback"
+                    
+
+        400:
+          description: An error in the request. Can be caused by incorrect or invalid data in the request body.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 400 Bad Request
+                    description: The error code.
+        
+        410:
+          description: The game no longer exists. Either the amount of maximum turns has been reached (12) and the computer has lost or the computer has succesfully guessed the code.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 410 Gone
+                    description: The error code.
+                  message:
+                    type: string
+                    example: Game won
+                    description: Game status. Can be either "Game won" or "Turns exceeded"
+                  correct_code:
+                    type: array
+                    items:
+                      type: integer
+                    example: [1, 2, 3, 4]
+                    description: The correct code.
+  /games:
+    get:
+      tags: 
+        - games
+      description: Gets a list of all currently active games.
+      responses:
+        200:
+          description: Returns an array of all current games or an empty array if none exist.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: 
+                    type: integer
+                    properties:
+                      feedback:
+                        type: object
+                        additionalProperties: 
+                          type: integer
+                          properties:
+                            [turn_number]:
+                              $ref: "#/components/schemas/Feedback"
+                        description: All recorded feedback from the game, stored as a hash. Keys are turn numbers, while values are feedback objects.
+  /games/{id}:
+    get:
+      tags: 
+        - games
+      description: Gets properties about an active game if it matches the given ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: A game ID.
+          schema:
+            type: integer
+            format: int32
+            minimum: 100
+            maximum: 999
+            example: 500
+            description: A game ID.
+      responses:
+        200:
+          description: Returns the properties of the game with the specified ID.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: 
+                    type: integer
+                    properties:
+                      feedback:
+                        type: object
+                        properties:
+                          [turn_number]:
+                            $ref: "#/components/schemas/Feedback"
+                        description: All recorded feedback from the game, stored as a hash. Keys are turn numbers, while values are feedback objects.
+        404:
+          description: Will be returned if the specified game ID does not exist for a game.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 404 Not Found
+                    description: The error code.
+    delete:
+      tags: 
+        - games
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: A game ID.
+          schema:
+            type: integer
+            format: int32
+            minimum: 100
+            maximum: 999
+            example: 500
+            description: A game ID.
+      responses:
+        200:
+          description: Game has been succesfully deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deleted:
+                    type: boolean
+                    example: true
+                  correct_code:
+                    type: array
+                    items:
+                      type: integer
+                    example: [1, 2, 3, 4]
+                    description: A game code.
+        404:
+          description: Will be returned if the specified game ID does not exist for a game.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 404 Not Found
+                    description: The error code.
+  /games/{id}/{attribute}:
+    get:
+      tags: 
+        - games
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: A game ID.
+          schema:
+            type: integer
+            format: int32
+            minimum: 100
+            maximum: 999
+            example: 500
+        - name: attribute
+          in: path
+          required: true
+          description: The attribute to fetch.
+          schema:
+            type: string
+      responses:
+        200:
+          description: Returns the specified attribute for the given game ID.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  [attr]:
+                    oneOf:
+                      - type: integer
+                        example: 500
+                        description: Game ID or turn number, depending on supplied attribute
+                      - type: string
+                        example: code_breaker
+                        description: Role of player
+                      - type: object
+                        example: [feedback object]
+                        description: A feedback object.
+                      - type: array
+                        example: [1, 2, 3, 4]
+                        description: A game code.
+        400:
+          description: An error in the request. Can be caused by incorrect or invalid data in the request body.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 400 Bad Request
+                    description: The error code.
+
+
+      
+                  
+
+
+  
+components:
+  schemas:
+    Feedback:
+      type: object
+      description: The feedback object. Contains feedback on the computer's guess.
+      properties:
+        exact:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 4
+          example: 1
+          description: Amount of numbers in the correct position.
+        near:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 4
+          example: 2
+          description: Amount of numbers that are in the code, but in the incorrect position.
+        none:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 4
+          example: 1
+          description: Amount of numbers not in the code.
+    Game:
+      type: object
+      description: A game object. Contains information on a game.
+      properties:
+        id:
+          type: integer
+          format: int32
+          minimum: 100
+          maximum: 999
+          example: 500
+          description: A game ID.
+        role:
+          type: string
+          example: code_maker
+          description: The player's role. Can be code maker or code breaker.
